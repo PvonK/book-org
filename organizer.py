@@ -6,6 +6,28 @@ from unidecode import unidecode
 #import nlp_categorizer
 from colorama import Fore, Back, Style
 
+
+
+# TODO interactive renamer and author input for when there is a total miss (or the metadata found gets close but not quite) like:
+"""
+Processing: Jorge Luis Borges - Libro de sueños-Torres Agüero Editor (1976).djvu
+No ISBN found. Using title/author fallback: Libro de sueños-Torres Agüero Editor by Jorge Luis Borges
+trying search: title:Libro de sueños-Torres Agüero Editor author:Jorge Luis Borges
+trying search: title:Jorge Luis Borges author:Libro de sueños-Torres Agüero Editor
+trying search: title:Libro de sueños-Torres Agüero Editor
+trying search: title:Jorge Luis Borges
+Jorge Luis Borges: obras completas ['Argentine literature']
+FOUND TITLE Jorge Luis Borges: obras completas
+FOUND AUTHORS ['Jorge Luís Borges']
+
+[0]
+  Title     : Jorge Luis Borges: obras completas
+  Authors   : ['Jorge Luís Borges']
+  Published : 1998
+  Isbn      : 9789726953463
+  Categories: ['argentine literature']
+"""
+
 # TODO why would i need this? i dont need to detct if a book is already renamed
 pattern = r"""
 ^
@@ -19,13 +41,13 @@ $
 """
 
 
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("directory", type=str)
     parser.add_argument("-o", "--output", type=str)
-    parser.add_argument("-r", "--recursive", type=bool)
+    parser.add_argument("-d", "--dryrun", action="store_true")
+    parser.add_argument("-r", "--recursive", action="store_true")
+    parser.add_argument("-i", "--interactive", action="store_true")
 
     args = parser.parse_args()
 
@@ -42,7 +64,7 @@ def list_intersection_preserving_order(a,b):
     return [value for value in a if value in b]
 
 class Book():
-    def __init__(self, path_to_file):
+    def __init__(self, path_to_file, interactive_organizer=False):
         self.path, self.filename = os.path.split(path_to_file)
         self.fullpath = path_to_file
         self.metadata : dict = {}
@@ -51,6 +73,7 @@ class Book():
         self.new_filename = ""
         self.new_path = ""
         self.new_fullpath = ""
+        self.interactive_organizer = interactive_organizer
 
 
     def organize_book(self):
@@ -61,15 +84,18 @@ class Book():
 
     # Searches for the books metadata on different information clients
     def find_metadata(self):
-        self.metadata = lib.main(self.fullpath)
+        self.metadata = lib.main(self.filename, self.interactive_organizer)
 
     # Renames the book based on the newly aquired metadata
     def set_new_filename(self, metadata):
         if not metadata:
-            self.new_filename=self.filename
+            self.new_filename=self.filename.replace("_ ", ": ").replace("/", "_")
             return
 
-        authors = ", ".join(metadata.get("authors", [])).replace("/", "_")
+        authorslist = metadata.get("authors", [])
+        if len(metadata.get("authors", [])) > 3: authorslist = metadata.get("authors", [])[:2]
+
+        authors = ", ".join(authorslist).replace("/", "_")
         if authors: authors += " - "
         title = metadata.get("title").replace("/", "_")
         published = metadata.get("published","").replace("/", "_")
@@ -85,12 +111,14 @@ class Book():
         if self.metadata:
             self.categories = self.metadata.get("categories", ["uncategorized"])
 
-            self.categories += lib.category_fallback(unidecode(self.metadata.get("title","").lower()))
+            if "uncategorized" in self.categories:
+                self.categories += lib.category_fallback(unidecode(self.metadata.get("title","").lower()))
 
         else:
-            self.categories = ["no-metadata"]
-
             self.categories += lib.category_fallback(unidecode(self.new_filename.lower()))
+            if not self.categories:
+                self.categories = ["no-metadata"]
+
 
         if len(self.categories) > 1:
             if "no-metadata" in self.categories:
@@ -125,12 +153,23 @@ def log(action, text, color=Style.RESET_ALL, noprint=False):
         logfile.write(f"{action} {text}\n")
 
 
-def move_book(i, save_to):
+
+
+
+def link_file(src, dst):
+    try:
+        os.symlink(src, dst)
+    except FileExistsError:
+        pass
+
+def move_book(i, save_to, dry=False):
+    move = os.rename
+    if dry: move = link_file
     if i.new_fullpath:
         # Move the book to the new path
         os.makedirs(i.new_path, exist_ok=True)
         log("[move]", f"'{i.fullpath}' => '{i.new_fullpath}'", Fore.GREEN)
-        os.rename(i.fullpath, i.new_fullpath)
+        move(i.fullpath, i.new_fullpath)
 
         # if the book corresponds to more than one category, create a symlink on the other dirs
         if len(i.categories) > 1:
@@ -138,14 +177,11 @@ def move_book(i, save_to):
                 os.makedirs(os.path.join(save_to,"organized_books/",f"{j}"), exist_ok=True)
                 dir_to_link = os.path.join(save_to,"organized_books/",f"{j}", i.new_filename)
                 log("[link]", f"'{i.new_fullpath}' => '{dir_to_link}'")
-                try:
-                    os.symlink(i.new_fullpath, dir_to_link)
-                except FileExistsError:
-                    pass
+                link_file(i.new_fullpath, dir_to_link)
     else:
         newdir = os.path.join(save_to,"organized_books","no-metadata", i.filename)
         log(f"[move]", f"'{i.fullpath}' => '{newdir}'", Fore.RED)
-        os.rename(i.fullpath, newdir)
+        move(i.fullpath, newdir)
 
 
 def write_new_order_on_file(list_of_organized_books, save_to="."):
@@ -165,29 +201,44 @@ def progress_bar(full, fill):
     factor = 50
     progress = "#"*int(fill/factor) + " "*int(empty/factor)
 
-    print(progress)
+    percentage=100*(fill/full)
+    print(f"{percentage}%", progress)
 
+def is_ext_valid(ext):
+    valid_ext=[
+        ".mobi",
+        ".djvu",
+        ".txt",
+        ".epub",
+        ".pdf",
+    ]
+    return ext in valid_ext
 
-def organize_dir(directory, output="."):
+def organize_dir(directory, output=".", dry=False, interactive=False):
     if os.path.isfile(directory):
-        return Book(directory)
+        book = Book(directory, interactive_organizer=interactive)
+        book.organize_book()
+        return book
 
     all_files = find_find_all_files(directory)
     #all_books = []
     for n in range(len(all_files)):
         file = all_files[n]
         if os.path.isfile(file):
-            book = Book(file)
+            ext = os.path.splitext(file)[1]
+            if not is_ext_valid(ext): continue
+            book = Book(file, interactive_organizer=interactive)
             book.organize_book()
             #all_books.append(book.filename)
-            move_book(book, output)
+            move_book(book, output, dry)
         progress_bar(len(all_files), n)
 
     #nlp_categorizer.main(all_books)
 
 
+
 if __name__=="__main__":
 
     args = parse_args()
-    r = organize_dir(args.directory)
+    r = organize_dir(args.directory, dry=args.dryrun, interactive=args.interactive)
 
