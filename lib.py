@@ -8,6 +8,47 @@ GOOGLE_BOOKS_API = "https://www.googleapis.com/books/v1/volumes?q="
 OPEN_LIBRARY_API = "https://openlibrary.org/search.json?"
 
 
+
+def beautifulprint(dict_list):
+    if not dict_list:
+        print("No items to display.")
+        return
+
+    for idx, item in enumerate(dict_list):
+        print(f"\n\033[1m[{idx}]\033[0m")  # Bold index
+        for key, value in item.items():
+            if value:  # Skip empty fields for clarity
+                print(f"  \033[94m{key.capitalize():<10}\033[0m: {value}")
+    print("\nSelect an item by index")
+
+
+
+def check_author_intitle(authors, title):
+    title = title.lower()
+    
+    author_words = []
+    for author in authors:
+        author_words += author.replace(",", "").split()
+
+    author_words = [word.lower() for word in author_words if len(word) >= 3]
+
+    return any(word in title for word in author_words)
+
+def extract_series(name):
+    series_match = re.match(r'[\[\(]([^\]\)]+)[\]\)]\s*(.+)', name)
+    if series_match:
+        return series_match.groups()
+
+
+def extract_year(name):
+    pub_year_match = re.search(r'\((\d{4}),\s*([^)]+)\)', name)
+    if pub_year_match:
+        year = pub_year_match.group(1)
+        publisher = pub_year_match.group(2).strip()
+        name = name[:pub_year_match.start()].strip()            
+        return year, publisher, name
+
+
 def extract_isbn_from_filename(filename):
     """Extracts ISBN-10 or ISBN-13 from filename."""
     match = re.search(r'\b(?:97[89])?\d{9}[\dXx]\b', filename)
@@ -23,7 +64,13 @@ def extract_title_author_from_filename(filename):
         author, title = base.split('-', 1)
         title = title.replace("_ ", ": ").replace("_", " ")
         title = title.split("-")[0] # benchamrk if this is a good change or not, sometimes its part of the title, sometimes its not
+        match_year = extract_year(title)
+        if match_year:
+            result['year'], result['publisher'], title = match_year
+
         return author.strip(), title.strip()
+    
+    print("failed to find authors on book:", filename)
     return None, None
 
 def fetch_metadata_by_isbn(isbn):
@@ -37,17 +84,79 @@ def fetch_metadata_by_isbn(isbn):
     return None
 
 
-def fetch_metadata_by_title_author(author, title):
+def fetch_metadata_by_title_author(author, title, interactive=False):
     """Fetches metadata using title and author."""
-    query = f'intitle:{title}+inauthor:{author}' if author else f'intitle:{title}'
+
+    metadata_result = {}
+
+    if interactive: metadata_options = []
+
+    print(f"trying search: title:{title} author:{author}")
+    query = f'intitle:{title}+inauthor:{author}'
     url = f"{GOOGLE_BOOKS_API}{query}"
     response = requests.get(url)
+
     if response.status_code == 200:
         items = response.json().get("items")
         if items:
             return parse_metadata(items[0])
-    # try only the title
-    fetch_metadata_by_title_author(None, title)
+
+    if not metadata_result and author and title:
+        print(f"trying search: title:{author} author:{title}")
+        # check if author and title are reversed
+        query = f'intitle:{author}+inauthor:{title}'
+        url = f"{GOOGLE_BOOKS_API}{query}"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            items = response.json().get("items")
+            if items:
+                metadata_result= parse_metadata(items[0])
+                if interactive: metadata_options.append(metadata_result)
+
+        if check_author_intitle(metadata_result.get("authors", []), title):
+            return metadata_result
+
+    if not metadata_result and title:
+        print(f"trying search: title:{title}")
+        # check only title
+        query = f'intitle:{title}'
+        url = f"{GOOGLE_BOOKS_API}{query}"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            items = response.json().get("items")
+            if items:
+                metadata_result= parse_metadata(items[0])
+                if interactive: metadata_options.append(metadata_result)
+
+        if check_author_intitle(metadata_result.get("authors", []), title):
+            return metadata_result
+
+
+    if not metadata_result and author:
+        print(f"trying search: title:{author}")
+        # check only author
+        query = f'intitle:{author}'
+        url = f"{GOOGLE_BOOKS_API}{query}"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            items = response.json().get("items")
+            if items:
+                metadata_result= parse_metadata(items[0])
+                if interactive: metadata_options.append(metadata_result)
+
+        if check_author_intitle(metadata_result.get("authors", []), title):
+            return metadata_result
+
+    if interactive and metadata_options:
+        beautifulprint(metadata_options)
+        metadata_selection = input("Select which metadata is right, enter for none: ")
+        if metadata_selection.isdigit() and int(metadata_selection) < 3:
+            return metadata_options[int(metadata_selection)]
+
+    print("nothing was found")
     return None
 
 
@@ -62,22 +171,12 @@ def fetch_metadata_by_isbn_openlib(isbn):
     return None
 
 
-def fetch_metadata_by_title_author(author, title):
-    """Fetches metadata using title and author."""
-    query = f'title={title}&author={author}' if author else f'title={title}'
-    url = f"{OPEN_LIBRARY_API}{query}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        items = response.json().get("items")
-        if items:
-            return parse_metadata(items[0])
-    return None
-
-
 def parse_metadata(item):
     """Parses Google Books metadata."""
     volume_info = item.get("volumeInfo", {})
     print(volume_info.get("title"), volume_info.get("categories", ["uncategorized"]))
+    print("FOUND TITLE", volume_info.get("title", ""))
+    print("FOUND AUTHORS", volume_info.get("authors", []))
     return {
         "title": volume_info.get("title"),
         "authors": volume_info.get("authors", []),
@@ -93,28 +192,28 @@ def extract_isbn_from_industry_ids(identifiers):
             return id_obj.get("identifier")
     return ""
 
-def main(file_path):
-    if __name__ == "__main__": print(f"\nProcessing: {file_path}")
+def main(file_path, interactive=False):
+    print(f"\nProcessing: {file_path}")
     isbn = extract_isbn_from_filename(file_path)
     metadata = None
     if isbn:
-        if __name__ == "__main__": print(f"Found ISBN: {isbn}")
+        print(f"Found ISBN: {isbn}")
         metadata = fetch_metadata_by_isbn(isbn)
     else:
         author, title = extract_title_author_from_filename(file_path)
-        if title: 
-            if __name__ == "__main__": print(f"No ISBN found. Using title/author fallback: {title} by {author}")
-            metadata = fetch_metadata_by_title_author(author, title)
+        if title:
+            print(f"No ISBN found. Using title/author fallback: {title} by {author}")
+            metadata = fetch_metadata_by_title_author(author, title, interactive)
 
     if metadata:
-        if __name__ == "__main__": print("Metadata fetched:")
+        print("Metadata fetched:")
         for k, v in metadata.items():
             pass
-            if __name__ == "__main__": print(f"  {k.capitalize()}: {v}")
+            print(f"  {k.capitalize()}: {v}")
     else:
-        if __name__ == "__main__": print("=================")
-        if __name__ == "__main__": print(file_path)
-        if __name__ == "__main__": print("No metadata found.")
+        print("=================")
+        print(file_path)
+        print("No metadata found.")
 
     return metadata
 
@@ -134,7 +233,6 @@ def parse_annas_filename(filename):
     os.path.splitext(filename)[1]
     title,authors=filename.split(" -- ", 3)[:2]
     return {"title":title, "authors":authors}
-
 
 def parse_filename(filename):
     if "Anna’s Archive" in filename: return parse_annas_filename(filename)
@@ -159,16 +257,15 @@ def parse_filename(filename):
     name = clean_filename(name)
 
     # 3. Extract bracketed or parenthetical series
-    series_match = re.match(r'[\[\(]([^\]\)]+)[\]\)]\s*(.+)', name)
+    series_match = extract_series(name)
     if series_match:
-        result['series'], name = series_match.groups()
+        result['series'], name = series_match
+
 
     # 4. Extract year + publisher (e.g. (2001, Wiley))
-    pub_year_match = re.search(r'\((\d{4}),\s*([^)]+)\)', name)
-    if pub_year_match:
-        result['year'] = pub_year_match.group(1)
-        result['publisher'] = pub_year_match.group(2).strip()
-        name = name[:pub_year_match.start()].strip()
+    match_year = extract_year(name)
+    if match_year:
+        result['year'], result['publisher'], name = match_year
 
     # 5. Handle year-only case
     elif re.search(r'\((\d{4})\)$', name):
@@ -182,6 +279,27 @@ def parse_filename(filename):
     # 7. Split authors and title (use ` - ` delimiter)
     if ' - ' in name:
         people_part, title_part = name.split(' - ', 1)
+
+        if title_part.count("-") > 3:
+            title_part = title_part.replace("-", " ")
+        # This here is to separate the publisher from the title
+        # I only do it here, when authors are separated, because i feel
+        # like only the ones with correctly formated author names would also have publishing data  
+        elif title_part.count("-") > 0:
+            title_part = "-".join(title_part.split("-",-2)[:-1])
+
+        result['title'] = title_part.strip()
+        result['authors'] = people_part.strip()
+
+    elif " by " in name:
+        if title_part.count("-") > 3:
+            title_part = title_part.replace("-", " ")
+        elif title_part.count("-") > 0:
+            title_part = "-".join(title_part.split("-",-2)[:-1])
+
+        title_part, people_part = name.split(' by ', 1)
+
+
         result['title'] = title_part.strip()
         result['authors'] = people_part.strip()
     else:
@@ -249,6 +367,9 @@ def category_fallback(filename):
         in filename):
         categories.append("training")
 
+    if ("engineering" in filename):
+        categories.append("engineering")
+
     return categories
 
 
@@ -264,7 +385,7 @@ if __name__ == "__main__":
 
 
     if os.path.isfile(args.directory):
-        main(args.directory)
+        print(main(args.directory))
 
     elif os.path.isdir(args.directory):
         for i in os.listdir(args.directory):
