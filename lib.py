@@ -30,81 +30,54 @@ def fetch_metadata_by_isbn(isbn):
     return None
 
 
-def fetch_metadata_by_title_author(author, title, interactive=False):
-    """Fetches metadata using title and author."""
-
-    metadata_result = {}
-
-    if interactive: metadata_options = []
-
-    print(f"trying search: title:{title} author:{author}")
-    query = f'intitle:{title}+inauthor:{author}'
+def fetch_google_books(query: str):
+    """Helper to query the Google Books API and return parsed results."""
     url = f"{GOOGLE_BOOKS_API}{query}"
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        items = response.json().get("items")
-        if items:
-            return parse_metadata(items[0])
-
-    if not metadata_result and author and title:
-        print(f"trying search: title:{author} author:{title}")
-        # check if author and title are reversed
-        query = f'intitle:{author}+inauthor:{title}'
-        url = f"{GOOGLE_BOOKS_API}{query}"
+    #logger.debug(f"Querying Google Books API: {url}")
+    try:
         response = requests.get(url)
-
         if response.status_code == 200:
             items = response.json().get("items")
             if items:
-                metadata_result= parse_metadata(items[0])
-                if interactive: metadata_options.append(metadata_result)
-
-        if check_author_in_filename(metadata_result.get("authors", []), title):
-            return metadata_result
-
-    if not metadata_result and title:
-        print(f"trying search: title:{title}")
-        # check only title
-        query = f'intitle:{title}'
-        url = f"{GOOGLE_BOOKS_API}{query}"
-        response = requests.get(url)
-
-        if response.status_code == 200:
-            items = response.json().get("items")
-            if items:
-                metadata_result= parse_metadata(items[0])
-                if interactive: metadata_options.append(metadata_result)
-
-        if check_author_in_filename(metadata_result.get("authors", []), title):
-            return metadata_result
+                return parse_metadata(items[0])
+    except Exception as e:
+        pass
+        #logger.warning(f"Failed to fetch metadata from API: {e}")
+    return None
 
 
-    if not metadata_result and author:
-        print(f"trying search: title:{author}")
-        # check only author
-        query = f'intitle:{author}'
-        url = f"{GOOGLE_BOOKS_API}{query}"
-        response = requests.get(url)
+SEARCH_PATTERNS = [
+    lambda a, t: f"intitle:{t}+inauthor:{a}",  # normal
+    lambda a, t: f"intitle:{a}+inauthor:{t}",  # reversed
+    lambda a, t: f"intitle:{t}",               # just title
+    lambda a, t: f"intitle:{a}"                # just author
+]
 
-        if response.status_code == 200:
-            items = response.json().get("items")
-            if items:
-                metadata_result= parse_metadata(items[0])
-                if interactive: metadata_options.append(metadata_result)
+def fetch_metadata_by_title_author(author: str, title: str, interactive=False):
+    """Attempts multiple strategies to fetch metadata using author and title."""
 
-        if check_author_in_filename(metadata_result.get("authors", []), title):
-            return metadata_result
+    metadata_options = []
+
+    for strategy in SEARCH_PATTERNS:
+        query = strategy(author, title)
+        #logger.info(f"Trying search query: {query}")
+        metadata = fetch_google_books(query)
+        if metadata:
+            metadata_options.append(metadata)
+            # Optionally verify if the author is embedded in the title (heuristic)
+            if check_author_in_filename(metadata.get("authors", []), title):
+                return metadata
 
     if interactive and metadata_options:
         beautifulprint(metadata_options)
-        metadata_selection = input("Select which metadata is right, enter for none: ")
-        if metadata_selection.isdigit() and int(metadata_selection) < 3:
-            return metadata_options[int(metadata_selection)]
+        selection = input("Select which metadata is correct [0-n], enter to skip: ")
+        if selection.isdigit():
+            index = int(selection)
+            if 0 <= index < len(metadata_options):
+                return metadata_options[index]
 
-    print("nothing was found")
+    #logger.warning("No metadata found.")
     return None
-
 
 def fetch_metadata_by_isbn_openlib(isbn):
     """Fetches metadata using ISBN."""
@@ -156,7 +129,6 @@ def main(file_path, interactive=False):
     else:
         print("=================")
         print(file_path)
-        print(file_name)
         print("No metadata found.")
         print("=================")
 
