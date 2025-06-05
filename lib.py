@@ -6,7 +6,7 @@ from .formatter import beautifulprint
 from .config import GOOGLE_BOOKS_API
 
 
-def check_author_intitle(authors, title):
+def check_author_in_filename(authors, title):
     title = title.lower()
     
     author_words = []
@@ -97,7 +97,7 @@ def fetch_metadata_by_title_author(author, title, interactive=False):
                 metadata_result= parse_metadata(items[0])
                 if interactive: metadata_options.append(metadata_result)
 
-        if check_author_intitle(metadata_result.get("authors", []), title):
+        if check_author_in_filename(metadata_result.get("authors", []), title):
             return metadata_result
 
     if not metadata_result and title:
@@ -113,7 +113,7 @@ def fetch_metadata_by_title_author(author, title, interactive=False):
                 metadata_result= parse_metadata(items[0])
                 if interactive: metadata_options.append(metadata_result)
 
-        if check_author_intitle(metadata_result.get("authors", []), title):
+        if check_author_in_filename(metadata_result.get("authors", []), title):
             return metadata_result
 
 
@@ -130,7 +130,7 @@ def fetch_metadata_by_title_author(author, title, interactive=False):
                 metadata_result= parse_metadata(items[0])
                 if interactive: metadata_options.append(metadata_result)
 
-        if check_author_intitle(metadata_result.get("authors", []), title):
+        if check_author_in_filename(metadata_result.get("authors", []), title):
             return metadata_result
 
     if interactive and metadata_options:
