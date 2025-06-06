@@ -1,10 +1,17 @@
+# formatter.py
+
 import subprocess
 import requests
 import os
 
-term_size = os.get_terminal_size()
-columns = term_size.columns
-lines = term_size.lines
+try:
+    term_size = os.get_terminal_size()
+    columns = term_size.columns
+    lines = term_size.lines
+except OSError:
+    term_size = None
+    columns = 0
+    lines = 0
 
 
 def download_image(url, path="/tmp/cover.jpg"):
@@ -58,6 +65,7 @@ def progress_bar(full, fill):
 
 
 def can_display_images():
+    # TODO check if terminal can display images
     return True
 
 

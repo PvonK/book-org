@@ -1,3 +1,5 @@
+# file_sorter.py
+
 import os
 from .formatter import log
 
@@ -9,7 +11,7 @@ def link_file(src, dst):
         pass
 
 
-def move_book(i, save_to, dry=False):
+def move_book(i, dry=False):
     move = os.rename
     if dry:
         move = link_file
@@ -24,17 +26,14 @@ def move_book(i, save_to, dry=False):
         # create a symlink on the other dirs
         if len(i.categories) > 1:
             for j in i.categories[1:]:
-                newdir = os.path.join(save_to, "organized_books/", f"{j}"),
+                newdir = os.path.join(i.output_path_dir, f"{j}"),
                 os.makedirs(newdir, exist_ok=True)
                 dir_to_link = os.path.join(newdir, i.new_filename)
                 log("[link]", f"'{i.new_fullpath}' => '{dir_to_link}'")
                 link_file(i.new_fullpath, dir_to_link)
     else:
-        newdir = os.path.join(
-            save_to,
-            "organized_books",
-            "no-metadata",
-            i.filename
-            )
-        log("[move]", f"'{i.fullpath}' => '{newdir}'")
-        move(i.fullpath, newdir)
+        newdir = os.path.join(i.output_path_dir, "no-metadata")
+        os.makedirs(newdir, exist_ok=True)
+        new_path = os.path.join(i.output_path_dir, "no-metadata", i.filename)
+        log("[move]", f"'{i.fullpath}' => '{new_path}'")
+        move(i.fullpath, new_path)

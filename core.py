@@ -1,3 +1,5 @@
+# core.py
+
 import os
 import subprocess
 from .Book import Book
@@ -39,24 +41,34 @@ def is_ext_valid(ext):
     return ext in valid_ext
 
 
-def organize_dir(directory, output=".", dry=False, interactive=False):
+def organize_dir(
+    directory,
+    output=".",
+    dry=False,
+    interactive=False,
+    output_path_dir=None
+        ):
     if os.path.isfile(directory):
-        book = Book(directory, interactive_organizer=interactive)
+        book = Book(
+            directory,
+            interactive_organizer=interactive,
+            output_path_dir=output_path_dir
+            )
         book.organize_book()
         return book
 
     all_files = find_find_all_files(directory)
-    # all_books = []
     for n in range(len(all_files)):
         file = all_files[n]
         if os.path.isfile(file):
             ext = os.path.splitext(file)[1]
             if not is_ext_valid(ext):
                 continue
-            book = Book(file, interactive_organizer=interactive)
+            book = Book(
+                file,
+                interactive_organizer=interactive,
+                output_path_dir=output_path_dir
+                )
             book.organize_book()
-            # all_books.append(book.filename)
             move_book(book, output, dry)
         progress_bar(len(all_files), n)
-
-    # nlp_categorizer.main(all_books)

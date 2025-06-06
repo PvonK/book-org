@@ -1,3 +1,5 @@
+# Book.py
+
 import os
 from unidecode import unidecode
 from .fetcher import fetch_metadata_by_isbn
@@ -75,7 +77,12 @@ def category_fallback(filename):
 
 
 class Book():
-    def __init__(self, path_to_file, interactive_organizer=False):
+    def __init__(
+        self,
+        path_to_file,
+        interactive_organizer=False,
+        output_path_dir=None
+            ):
         self.path, self.filename = os.path.split(path_to_file)
         self.fullpath = path_to_file
         self.metadata: dict = {}
@@ -84,6 +91,7 @@ class Book():
         self.new_filename = ""
         self.new_path = ""
         self.new_fullpath = ""
+        self.output_path_dir = output_path_dir or "organized_books"
         self.interactive_organizer = interactive_organizer
 
     def organize_book(self):
@@ -106,7 +114,7 @@ class Book():
             parsed_filename = parse_filename(filename)
             author = parsed_filename.get("authors", "")
             title = parsed_filename.get("title", "").replace("_ ", ": ")
-            title = parsed_filename.get("title", "").replace("_", " ")
+            title = title.replace("_", " ")
             if title:
                 log("[LOGS]", f"No ISBN found. Using title/author fallback:\
                         {title} by {author}")
@@ -121,7 +129,6 @@ class Book():
         if metadata:
             log("[LOGS]", "Metadata fetched:")
             for k, v in metadata.items():
-                pass
                 log("[LOGS]", f"  {k.capitalize()}: {v}")
 
         self.metadata = metadata
@@ -129,8 +136,9 @@ class Book():
     # Renames the book based on the newly aquired metadata
     def set_new_filename(self, metadata):
         if not metadata:
-            self.new_filename = self.filename.replace("_ ", ": ")
-            self.new_filename = self.filename.replace("/", "_")
+            name, ext = os.path.splitext(self.filename)
+            name = name.replace("_ ", ": ").replace("/", "_")
+            self.new_filename = f"{name}{ext}"
             return
 
         authorslist = metadata.get("authors", [])
@@ -192,7 +200,7 @@ class Book():
             categories_to_go_on = self.categories
 
         self.new_path = os.path.join(
-            "organized_books/",
+            self.output_path_dir,
             f"{categories_to_go_on[0]}"
             )
 

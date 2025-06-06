@@ -1,3 +1,5 @@
+# extractor.py
+
 """ Data extractors from filename """
 import re
 

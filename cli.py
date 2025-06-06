@@ -1,3 +1,5 @@
+# cli.py
+
 from .core import organize_dir
 import argparse
 
@@ -20,7 +22,8 @@ def main():
     organize_dir(
         args.directory,
         dry=args.dryrun,
-        interactive=args.interactive
+        interactive=args.interactive,
+        output_path_dir=args.output,
         )
 
 
