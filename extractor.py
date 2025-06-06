@@ -13,7 +13,7 @@ def extract_year(name):
     if pub_year_match:
         year = pub_year_match.group(1)
         publisher = pub_year_match.group(2).strip()
-        name = name[:pub_year_match.start()].strip()            
+        name = name[:pub_year_match.start()].strip()
         return year, publisher, name
 
 
