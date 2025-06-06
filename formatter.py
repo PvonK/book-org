@@ -10,3 +10,12 @@ def beautifulprint(dict_list):
                 print(f"  \033[94m{key.capitalize():<10}\033[0m: {value}")
     print("\nSelect an item by index")
 
+
+def progress_bar(full, fill):
+    empty = full-fill
+
+    factor = 50
+    progress = "#"*int(fill/factor) + " "*int(empty/factor)
+
+    percentage = 100*(fill/full)
+    print(f"{percentage}%", progress)
