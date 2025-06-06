@@ -83,9 +83,10 @@ class Book():
     # change the path of the book based on the categories
     def set_new_path(self, pre_defined_categories=[]):
         if pre_defined_categories:
-            categories_to_go_on = list_intersection_preserving_order(
-                self.categories, pre_defined_categories
-                )
+            categories_to_go_on = [
+                value for value in self.categories
+                if value in pre_defined_categories
+                ]
         else:
             categories_to_go_on = self.categories
 
