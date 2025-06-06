@@ -26,7 +26,7 @@ def move_book(i, dry=False):
         # create a symlink on the other dirs
         if len(i.categories) > 1:
             for j in i.categories[1:]:
-                newdir = os.path.join(i.output_path_dir, f"{j}"),
+                newdir = os.path.join(i.output_path_dir, f"{j}")
                 os.makedirs(newdir, exist_ok=True)
                 dir_to_link = os.path.join(newdir, i.new_filename)
                 log("[link]", f"'{i.new_fullpath}' => '{dir_to_link}'")

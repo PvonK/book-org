@@ -7,73 +7,7 @@ from .fetcher import fetch_metadata_by_title_author
 from .extractor import extract_isbn_from_filename
 from .parser import parse_filename
 from .formatter import log
-
-
-def category_fallback(filename):
-    categories = []
-
-    if (
-         "comp" in filename or
-         " hack" in filename or
-         " cyber" in filename or
-         " vpn " in filename):
-        categories.append("computers")
-
-    if (
-         "aero" in filename or
-         " aircr" in filename or
-         "flight" in filename):
-        categories.append("aeronautics")
-
-    if (
-         "astron" in filename or
-         ("star" in filename and "started" not in filename) or
-         "galaxy" in filename or
-         "planet" in filename or
-         "moon" in filename
-         ):
-        categories.append("astronomy")
-
-    if "phys" in filename or "fisica" in filename:
-        categories.append("physics")
-
-    if "animal" in filename:
-        categories.append("zoology")
-
-    if (
-         "army" in filename or
-         " war " in filename or
-         " milit" in filename):
-        categories.append("military")
-
-    if "anatom" in filename:
-        categories.append("anatomy")
-
-    if (
-         " anim" in filename or
-         " draw" in filename or
-         " paint" in filename):
-        categories.append("art")
-
-    if "german" in filename:
-        categories.append("german")
-
-    if (
-         "game" in filename or
-         "unity" in filename or
-         "godot" in filename):
-        categories.append("games")
-
-    if (
-         "training" in filename or
-         "excercise" in filename or
-         "martial" in filename):
-        categories.append("training")
-
-    if ("engineering" in filename):
-        categories.append("engineering")
-
-    return categories
+from .categorizer import category_fallback
 
 
 class Book():
@@ -202,8 +136,8 @@ class Book():
                 "categories", ["uncategorized"]
                 )
 
-            if "uncategorized" in self.categories:
-                self.categories += category_fallback(
+            if self.categories == ["uncategorized"]:
+                self.categories = category_fallback(
                     unidecode(self.metadata.get("title", "").lower())
                     )
 
@@ -211,14 +145,8 @@ class Book():
             self.categories += category_fallback(
                 unidecode(self.new_filename.lower())
                 )
-            if not self.categories:
+            if self.categories == ["uncategorized"]:
                 self.categories = ["no-metadata"]
-
-        if len(self.categories) > 1:
-            if "no-metadata" in self.categories:
-                self.categories.remove("no-metadata")
-            elif "uncategorized" in self.categories:
-                self.categories.remove("uncategorized")
 
     # change the path of the book based on the categories
     def set_new_path(self, pre_defined_categories=[]):
