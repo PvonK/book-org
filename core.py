@@ -4,6 +4,7 @@ from .Book import Book
 from .formatter import progress_bar
 from .file_sorter import move_book
 
+
 # TODO interactive renamer and author input for when there is a total miss
 # Also a query editor in case the user wants to manually query the metadata
 # (or the metadata found gets close but not quite) like:

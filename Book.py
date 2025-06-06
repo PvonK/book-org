@@ -1,6 +1,77 @@
 import os
 from unidecode import unidecode
-from .lib import lib_main, category_fallback
+from .fetcher import fetch_metadata_by_isbn
+from .fetcher import fetch_metadata_by_title_author
+from .extractor import extract_isbn_from_filename
+from .parser import parse_filename
+from .formatter import log
+
+
+def category_fallback(filename):
+    categories = []
+
+    if (
+         "comp" in filename or
+         " hack" in filename or
+         " cyber" in filename or
+         " vpn " in filename):
+        categories.append("computers")
+
+    if (
+         "aero" in filename or
+         " aircr" in filename or
+         "flight" in filename):
+        categories.append("aeronautics")
+
+    if (
+         "astron" in filename or
+         ("star" in filename and "started" not in filename) or
+         "galaxy" in filename or
+         "planet" in filename or
+         "moon" in filename
+         ):
+        categories.append("astronomy")
+
+    if "phys" in filename or "fisica" in filename:
+        categories.append("physics")
+
+    if "animal" in filename:
+        categories.append("zoology")
+
+    if (
+         "army" in filename or
+         " war " in filename or
+         " milit" in filename):
+        categories.append("military")
+
+    if "anatom" in filename:
+        categories.append("anatomy")
+
+    if (
+         " anim" in filename or
+         " draw" in filename or
+         " paint" in filename):
+        categories.append("art")
+
+    if "german" in filename:
+        categories.append("german")
+
+    if (
+         "game" in filename or
+         "unity" in filename or
+         "godot" in filename):
+        categories.append("games")
+
+    if (
+         "training" in filename or
+         "excercise" in filename or
+         "martial" in filename):
+        categories.append("training")
+
+    if ("engineering" in filename):
+        categories.append("engineering")
+
+    return categories
 
 
 class Book():
@@ -23,7 +94,37 @@ class Book():
 
     # Searches for the books metadata on different information clients
     def find_metadata(self):
-        self.metadata = lib_main(self.filename, self.interactive_organizer)
+        log("[SEPARATOR]", "=")
+        log("[LOGS]", f"Processing: {self.filename}")
+        isbn = extract_isbn_from_filename(self.filename)
+        metadata = None
+        if isbn:
+            log("[LOGS]", f"Found ISBN: {isbn}")
+            metadata = fetch_metadata_by_isbn(isbn)
+        else:
+            filename = os.path.splitext(os.path.basename(self.filename))[0]
+            parsed_filename = parse_filename(filename)
+            author = parsed_filename.get("authors", "")
+            title = parsed_filename.get("title", "").replace("_ ", ": ")
+            title = parsed_filename.get("title", "").replace("_", " ")
+            if title:
+                log("[LOGS]", f"No ISBN found. Using title/author fallback:\
+                        {title} by {author}")
+
+                metadata = fetch_metadata_by_title_author(
+                    author,
+                    title,
+                    interactive=self.interactive_organizer,
+                    filename=self.filename
+                    )
+
+        if metadata:
+            log("[LOGS]", "Metadata fetched:")
+            for k, v in metadata.items():
+                pass
+                log("[LOGS]", f"  {k.capitalize()}: {v}")
+
+        self.metadata = metadata
 
     # Renames the book based on the newly aquired metadata
     def set_new_filename(self, metadata):

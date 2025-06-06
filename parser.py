@@ -34,9 +34,12 @@ def parse_filename(filename):
     }
 
     # 1. Remove extension
-    path = Path(filename)
-    result['extension'] = path.suffix.replace('.', '')
-    name = path.stem
+    if filename.count(".") == 1:
+        path = Path(filename)
+        result['extension'] = path.suffix.replace('.', '')
+        name = path.stem
+    else:
+        name = filename
 
     # 2. Clean up and normalize
     name = clean_filename(name)
@@ -77,12 +80,12 @@ def parse_filename(filename):
         result['authors'] = people_part.strip()
 
     elif " by " in name:
+        title_part, people_part = name.split(' by ', 1)
+
         if title_part.count("-") > 3:
             title_part = title_part.replace("-", " ")
         elif title_part.count("-") > 0:
             title_part = "-".join(title_part.split("-", -2)[:-1])
-
-        title_part, people_part = name.split(' by ', 1)
 
         result['title'] = title_part.strip()
         result['authors'] = people_part.strip()
@@ -95,4 +98,5 @@ def parse_filename(filename):
     if volume_match:
         result['volume'] = volume_match.group(2)
 
+    print("resulr: ", result)
     return result

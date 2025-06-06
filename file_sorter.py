@@ -1,12 +1,5 @@
 import os
-
-
-def log(action, text, noprint=False):
-    if not noprint:
-        print(action, text)
-
-    with open("logfile.txt", "a+") as logfile:
-        logfile.write(f"{action} {text}\n")
+from .formatter import log
 
 
 def link_file(src, dst):
