@@ -11,10 +11,25 @@ from .file_sorter import move_book
 # (or the metadata found gets close but not quite) like:
 
 
+def is_ext_valid(ext):
+    valid_ext = [
+        ".mobi",
+        ".djvu",
+        ".txt",
+        ".epub",
+        ".pdf",
+    ]
+    return ext in valid_ext
+
+
 def find_all_files(find_dir):
     all_files = []
     for dirpath, _, filenames in os.walk(find_dir):
         for file in filenames:
+            ext = os.path.splitext(file)[1]
+            if not is_ext_valid(ext):
+                continue
+
             full_path = os.path.join(dirpath, file)
             all_files.append(full_path)
     return all_files
@@ -27,17 +42,6 @@ def standardize_categories(list_of_books):
         book.metadata.categories  # TODO iterate books and get their categories
 
     # TODO group categories together and standardize names
-
-
-def is_ext_valid(ext):
-    valid_ext = [
-        ".mobi",
-        ".djvu",
-        ".txt",
-        ".epub",
-        ".pdf",
-    ]
-    return ext in valid_ext
 
 
 def organize_dir(
@@ -60,11 +64,6 @@ def organize_dir(
     for n in range(len(all_files)):
         file = all_files[n]
         if os.path.isfile(file):
-
-            ext = os.path.splitext(file)[1]
-            if not is_ext_valid(ext):
-                continue
-
             book = Book(
                 file,
                 interactive_organizer=interactive,
