@@ -103,33 +103,64 @@ class Book():
     # Searches for the books metadata on different information clients
     def find_metadata(self):
         log("[SEPARATOR]", "=")
-        log("[LOGS]", f"Processing: {self.filename}")
+        log("[INFO]", f"Processing: {self.filename}")
         isbn = extract_isbn_from_filename(self.filename)
         metadata = None
+
         if isbn:
-            log("[LOGS]", f"Found ISBN: {isbn}")
-            metadata = fetch_metadata_by_isbn(isbn)
+            log("[INFO]", f"Found ISBN in filename: {isbn}")
+            try:
+                metadata = fetch_metadata_by_isbn(isbn)
+                if metadata:
+                    log("[SUCCESS]", "Successfully fetched metadata via ISBN.")
+                else:
+                    log("[WARNING]", "No metadata found with extracted ISBN.")
+            except Exception as e:
+                log("[ERROR]", f"Exception during ISBN fetch: {e}")
         else:
             filename = os.path.splitext(os.path.basename(self.filename))[0]
             parsed_filename = parse_filename(filename)
             author = parsed_filename.get("authors", "")
-            title = parsed_filename.get("title", "").replace("_ ", ": ")
-            title = title.replace("_", " ")
-            if title:
-                log("[LOGS]", f"No ISBN found. Using title/author fallback:\
-                        {title} by {author}")
+            title = parsed_filename.get("title", "")
+            title = title.replace("_ ", ": ").replace("_", " ")
 
-                metadata = fetch_metadata_by_title_author(
-                    author,
-                    title,
-                    interactive=self.interactive_organizer,
-                    filename=self.filename
+            if not title:
+                log(
+                    "[WARNING]",
+                    "No ISBN or usable title extracted from filename."
                     )
+            else:
+                log(
+                    "[INFO]",
+                    f"No ISBN found. \
+                        Trying title/author: '{title}' by '{author}'"
+                    )
+                try:
+                    metadata = fetch_metadata_by_title_author(
+                        author,
+                        title,
+                        interactive=self.interactive_organizer,
+                        filename=self.filename
+                    )
+                    if metadata:
+                        log(
+                            "[SUCCESS]",
+                            "Successfully fetched metadata via title/author."
+                            )
+                    else:
+                        log(
+                            "[WARNING]",
+                            "No metadata found with title/author fallback."
+                            )
+                except Exception as e:
+                    log("[ERROR]", f"Exception during title/author fetch: {e}")
 
         if metadata:
-            log("[LOGS]", "Metadata fetched:")
+            log("[INFO]", "Metadata fetched successfully:")
             for k, v in metadata.items():
-                log("[LOGS]", f"  {k.capitalize()}: {v}")
+                log("[DATA]", f"{k.capitalize()}: {v}")
+        else:
+            log("[FAILURE]", f"Failed to find metadata for: {self.filename}")
 
         self.metadata = metadata
 
