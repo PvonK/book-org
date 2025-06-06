@@ -74,11 +74,14 @@ def can_display_images():
 
 
 def show_image_in_kitty(image_path):
-    subprocess.run([
-        "kitty",
-        "+kitten",
-        "icat",
-        "--align",
-        "left",
-        image_path,
-        ])
+    try:
+        subprocess.run([
+            "kitty",
+            "+kitten",
+            "icat",
+            "--align",
+            "left",
+            image_path,
+            ])
+    except Exception:
+        pass
