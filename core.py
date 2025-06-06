@@ -4,7 +4,7 @@ import os
 from .Book import Book
 from .formatter import progress_bar
 from .file_sorter import move_book
-
+from .config import valid_file_extensions
 
 # TODO interactive renamer and author input for when there is a total miss
 # Also a query editor in case the user wants to manually query the metadata
@@ -12,14 +12,7 @@ from .file_sorter import move_book
 
 
 def is_ext_valid(ext):
-    valid_ext = [
-        ".mobi",
-        ".djvu",
-        ".txt",
-        ".epub",
-        ".pdf",
-    ]
-    return ext in valid_ext
+    return ext in valid_file_extensions
 
 
 def find_all_files(find_dir):
