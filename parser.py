@@ -1,7 +1,7 @@
 import re
 import os
 from pathlib import Path
-from extractor import extract_series, extract_year
+from .extractor import extract_series, extract_year
 
 
 def clean_filename(name):
@@ -11,14 +11,16 @@ def clean_filename(name):
     name = re.sub(r'\s+', ' ', name).strip()
     return name
 
+
 def parse_annas_filename(filename):
-    #OSINT_ Open Source Intelligence -- Victor Bancayan -- Edicion Especial, 2023 -- Hack Underway -- 685c26d72a0b6da440aa5db5f2b28386 -- Anna’s Archive.pdf
     os.path.splitext(filename)[1]
-    title,authors=filename.split(" -- ", 3)[:2]
-    return {"title":title, "authors":authors}
+    title, authors = filename.split(" -- ", 3)[:2]
+    return {"title": title, "authors": authors}
+
 
 def parse_filename(filename):
-    if "Anna’s Archive" in filename: return parse_annas_filename(filename)
+    if "Anna’s Archive" in filename:
+        return parse_annas_filename(filename)
 
     result = {
         'series': None,
@@ -44,7 +46,6 @@ def parse_filename(filename):
     if series_match:
         result['series'], name = series_match
 
-
     # 4. Extract year + publisher (e.g. (2001, Wiley))
     match_year = extract_year(name)
     if match_year:
@@ -66,10 +67,11 @@ def parse_filename(filename):
         if title_part.count("-") > 3:
             title_part = title_part.replace("-", " ")
         # This here is to separate the publisher from the title
-        # I only do it here, when authors are separated, because i feel
-        # like only the ones with correctly formated author names would also have publishing data  
+        # I only do it here, when authors are separated, because I feel
+        # like only the ones with correctly formated author names would
+        # also have publishing data
         elif title_part.count("-") > 0:
-            title_part = "-".join(title_part.split("-",-2)[:-1])
+            title_part = "-".join(title_part.split("-", -2)[:-1])
 
         result['title'] = title_part.strip()
         result['authors'] = people_part.strip()
@@ -78,10 +80,9 @@ def parse_filename(filename):
         if title_part.count("-") > 3:
             title_part = title_part.replace("-", " ")
         elif title_part.count("-") > 0:
-            title_part = "-".join(title_part.split("-",-2)[:-1])
+            title_part = "-".join(title_part.split("-", -2)[:-1])
 
         title_part, people_part = name.split(' by ', 1)
-
 
         result['title'] = title_part.strip()
         result['authors'] = people_part.strip()

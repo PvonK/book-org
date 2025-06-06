@@ -1,6 +1,5 @@
 """ Data extractors from filename """
 import re
-import os
 
 
 def extract_series(name):
@@ -17,10 +16,12 @@ def extract_year(name):
         name = name[:pub_year_match.start()].strip()            
         return year, publisher, name
 
+
 def extract_isbn_from_filename(filename):
     """Extracts ISBN-10 or ISBN-13 from filename."""
     match = re.search(r'\b(?:97[89])?\d{9}[\dXx]\b', filename)
     return match.group(0) if match else None
+
 
 def extract_isbn_from_industry_ids(identifiers):
     for id_obj in identifiers:
