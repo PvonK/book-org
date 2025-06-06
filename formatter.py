@@ -1,7 +1,6 @@
 # formatter.py
 
 import subprocess
-import requests
 import os
 
 try:
@@ -12,15 +11,6 @@ except OSError:
     term_size = None
     columns = 0
     lines = 0
-
-
-def download_image(url, path="/tmp/cover.jpg"):
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(path, "wb") as f:
-            f.write(response.content)
-        return path
-    return None
 
 
 def log(action, text, noprint=False):
