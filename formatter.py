@@ -54,14 +54,18 @@ def print_selection(dict_list):
     print("\nSelect an item by index")
 
 
-def progress_bar(full, fill):
-    empty = full-fill
+def progress_bar(total, processed):
+    progress_columns = columns-6
 
-    factor = 50
-    progress = "#"*int(fill/factor) + " "*int(empty/factor)
+    bars_per_completed_file = progress_columns/total
+    fill = processed * bars_per_completed_file
 
-    percentage = 100*(fill/full)
-    print(f"{percentage}%", progress)
+    empty = progress_columns-fill
+
+    progress = "#"*int(fill) + " "*int(empty)
+
+    percentage = f"{(processed / total) * 100:.1f}"
+    print(f"{percentage.rjust(5)}% {progress}")
 
 
 def can_display_images():
