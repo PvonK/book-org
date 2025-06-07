@@ -1,5 +1,8 @@
 import re
 
+# TODO Make categoty_fallback stricter
+# and less prone to false positives
+
 KEYWORD_CATEGORY_MAP = {
     "linux": "computers",
     "compu": "computers",
@@ -13,7 +16,7 @@ KEYWORD_CATEGORY_MAP = {
     "network": "networking",
     "tcp/ip": "networking",
     "tcp": "networking",
-    "ip": "networking",
+    " ip ": "networking",
     "hacking": "cybersecurity",
     "hack": "cybersecurity",
     "blockchain": "blockchain",
@@ -47,7 +50,7 @@ KEYWORD_CATEGORY_MAP = {
     "Drawing": "Art",
     "Color and Light": "Art",
     "Illustration": "Art",
-    "Art": "Art",
+    " Art": "Art",
     "Subway Art": "Art",
 
     # Astronomy / Space
