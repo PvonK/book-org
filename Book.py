@@ -4,7 +4,7 @@ import os
 from unidecode import unidecode
 from .fetcher import fetch_metadata_by_isbn
 from .fetcher import fetch_metadata_by_title_author
-from .extractor import extract_isbn_from_filename
+from .extractor import extract_isbn_from_filename, extract_file_extension
 from .parser import parse_filename
 from .formatter import log
 from .categorizer import category_fallback
@@ -101,7 +101,7 @@ class Book():
     # Renames the book based on the newly aquired metadata
     def set_new_filename(self, metadata):
         if not metadata:
-            name, ext = os.path.splitext(self.filename)
+            name, ext = extract_file_extension(self.filename)
             name = name.replace("_ ", ": ").replace("/", "_")
             self.new_filename = f"{name}{ext}"
             return
@@ -124,7 +124,7 @@ class Book():
         if isbn:
             isbn = f" [{isbn}]"
 
-        ext = os.path.splitext(self.filename)[1]
+        ext = extract_file_extension(self.filename)[1]
 
         self.new_filename = f"{authors}{title}{published}{isbn}{ext}"
 
