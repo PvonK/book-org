@@ -1,9 +1,9 @@
 import re
 
 from typing import Optional, Dict
-from pathlib import Path
 
 from .formatter import log
+from .extractor import extract_file_extension
 
 try:
     import fitz  # PyMuPDF
@@ -19,7 +19,7 @@ except ImportError:
 
 
 def extract_metadata(file_path: str) -> Dict[str, Optional[str]]:
-    ext = Path(file_path).suffix.lower()
+    ext = extract_file_extension(file_path)[1]
     if ext == ".pdf" and fitz:
         return extract_pdf_metadata(file_path)
     elif ext == ".epub" and epub:
