@@ -2,6 +2,7 @@
 
 """ Data extractors from filename """
 import re
+from .config import valid_file_extensions
 
 
 def extract_series(name):
@@ -45,3 +46,9 @@ def check_author_in_filename(authors, title):
         if any(word in title_words for word in author_words):
             return True
     return False
+
+
+def extract_file_extension(filename):
+    for i in valid_file_extensions:
+        if filename.endswith(i):
+            return filename.rsplit(i, 1)[0], i
