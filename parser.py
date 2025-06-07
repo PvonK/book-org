@@ -101,5 +101,4 @@ def parse_filename(filename):
     if volume_match:
         result['volume'] = volume_match.group(2)
 
-    print("resulr: ", result)
     return result
