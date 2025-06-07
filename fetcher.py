@@ -62,9 +62,12 @@ def fetch_google_books(query: str):
                 # published, publisher name, accuracy of title matching,
                 # number of authors, etc.
                 return parse_metadata(items[0])
-    except Exception:
+    except Exception as e:
         pass
-        log("[WARN]", f"Failed to fetch metadata from API: {e}")
+        log(
+            "[WARN]",
+            f"Failed to fetch metadata from API: {e}"
+            )
     return None
 
 

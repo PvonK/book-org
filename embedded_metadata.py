@@ -66,7 +66,10 @@ def extract_epub_metadata(file_path: str) -> Dict[str, Optional[str]]:
 
 
 def extract_isbn_from_text(text: str) -> Optional[str]:
-    match = re.search(r"(97[89][-\s]?\d{1,5}[-\s]?\d{1,7}[-\s]?\d{1,7}[-\s]?\d)", text)
+    match = re.search(
+        r"(97[89][-\s]?\d{1,5}[-\s]?\d{1,7}[-\s]?\d{1,7}[-\s]?\d)",
+        text
+        )
     if match:
         return match.group(1).replace(" ", "").replace("-", "")
     return None

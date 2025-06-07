@@ -9,6 +9,7 @@ from book_org.embedded_metadata import (
     extract_isbn_from_text
 )
 
+
 @pytest.mark.parametrize("text,isbn", [
     ("This book's ISBN is 978-3-16-148410-0", "9783161484100"),
     ("ISBN: 978 0 306 40615 7", "9780306406157"),
@@ -50,7 +51,8 @@ def test_extract_epub_metadata(mock_read_epub):
 
     mock_html_item = MagicMock()
     mock_html_item.get_type.return_value = epub.EpubHtml
-    mock_html_item.get_body_content.return_value = b"<html>ISBN 978-0-13-235088-4</html>"
+    mock_html_item.get_body_content.return_value = \
+        b"<html>ISBN 978-0-13-235088-4</html>"
 
     mock_book.items = [mock_html_item]
     mock_read_epub.return_value = mock_book
