@@ -30,3 +30,16 @@ def extract_isbn_from_industry_ids(identifiers):
         if "ISBN_13" in id_obj.get("type", ""):
             return id_obj.get("identifier")
     return ""
+
+
+def check_author_in_filename(authors, title):
+    title = title.lower()
+    # extract words with 3+ characters
+    title_words = set(re.findall(r'\b\w{3,}\b', title))
+
+    for author in authors:
+        # Normalize and split author name
+        author_words = re.findall(r'\b\w{3,}\b', author.lower())
+        if any(word in title_words for word in author_words):
+            return True
+    return False

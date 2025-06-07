@@ -4,6 +4,8 @@ import requests
 from .formatter import print_selection
 from .config import GOOGLE_BOOKS_API, OPEN_LIBRARY_API
 from .extractor import extract_isbn_from_industry_ids
+from .extractor import check_author_in_filename
+
 
 # TODO Show image links in terminal
 # (on the request its volumeInfo["imagelinks"]["thumbnail"])
@@ -84,6 +86,8 @@ def fetch_metadata_by_title_author(
         # logger.info(f"Trying search query: {query}")
         metadata = fetch_google_books(query)
         if metadata:
+            if check_author_in_filename([author], filename):
+                return metadata
             metadata_options.append(metadata)
 
     if interactive and metadata_options:
