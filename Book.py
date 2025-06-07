@@ -82,7 +82,11 @@ class Book():
 
                 # If title/author exists but no ISBN or no metadata:
                 # use author/title fallback
-                if (not metadata and (embedded_meta.get("title") or embedded_meta.get("author"))):
+                if (not metadata
+                        and (
+                            embedded_meta.get("title")
+                            or embedded_meta.get("author")
+                            )):
                     try:
                         metadata = fetch_metadata_by_title_author(
                             embedded_meta.get("author", ""),
