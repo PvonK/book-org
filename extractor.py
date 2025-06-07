@@ -21,7 +21,7 @@ def extract_year(name):
 
 def extract_isbn_from_filename(filename):
     """Extracts ISBN-10 or ISBN-13 from filename."""
-    match = re.search(r'\b(?:97[89])?\d{9}[\dXx]\b', filename)
+    match = re.search(r'(?:97[89])?\d{9}[\dXx]\b', filename)
     return match.group(0) if match else None
 
 

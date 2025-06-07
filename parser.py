@@ -7,7 +7,8 @@ from .extractor import extract_series, extract_year
 
 
 def clean_filename(name):
-    name = name.replace('_ ', ':')
+    name = name.strip()
+    name = name.replace('_ ', ': ')
     name = name.replace('_', ' ')
     name = name.replace('–', '-')
     name = re.sub(r'\s+', ' ', name).strip()
@@ -15,7 +16,7 @@ def clean_filename(name):
 
 
 def parse_annas_filename(filename):
-    os.path.splitext(filename)[1]
+    filename = os.path.splitext(filename)[0]
     title, authors = filename.split(" -- ", 3)[:2]
     return {"title": title, "authors": authors}
 

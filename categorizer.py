@@ -2,6 +2,10 @@ import re
 
 KEYWORD_CATEGORY_MAP = {
     "linux": "computers",
+    "compu": "computers",
+    "cyber": "computers",
+    "vpn": "computers",
+
     "python": "programming",
     "java": "programming",
     "react": "programming",
@@ -9,15 +13,13 @@ KEYWORD_CATEGORY_MAP = {
     "network": "networking",
     "tcp/ip": "networking",
     "tcp": "networking",
-    " ip ": "networking",
-    "hacking": "security",
-    "hack": "security",
+    "ip": "networking",
+    "hacking": "cybersecurity",
+    "hack": "cybersecurity",
     "blockchain": "blockchain",
     "drawing": "art",
     "sketch": "art",
-    "design": "design",
     "zoo": "zoology",
-    "animal": "zoology",
     "space": "astronomy",
     "game": "gamedev",
     "unity": "gamedev",
@@ -34,6 +36,8 @@ KEYWORD_CATEGORY_MAP = {
     "aero": "Aerospace",
     "rotorcraft": "Aerospace",
     "observations of shock waves": "Aerospace",
+    "aircr": "Aerospace",
+    "flight": "Aerospace",
 
     # Art / Drawing / Design
     "Loomis": "Art",
@@ -53,6 +57,10 @@ KEYWORD_CATEGORY_MAP = {
     "Telescope": "Astronomy",
     "Solar System": "Astronomy",
     "Curiosity": "Astronomy",
+    "astron": "Astronomy",
+    "galaxy": "Astronomy",
+    "planet": "Astronomy",
+    "moon": "Astronomy",
 
     # Biology / Botany / Zoology
     "Botanica": "Biology",
@@ -61,6 +69,8 @@ KEYWORD_CATEGORY_MAP = {
     "Species": "Biology",
     "Omega": "Biology",
     "Grzimek": "Biology",
+    "animal": "Biology",
+
 
     # Chemistry / Physics / General Science
     "Chemistry": "Science",
@@ -69,6 +79,7 @@ KEYWORD_CATEGORY_MAP = {
     "Chemical": "Science",
     "Applied Numerical Analysis": "Science",
     "Fundamentals": "Science",
+    "phys": "Science",
 
     # Chess
     "Chess": "Chess",
@@ -88,25 +99,24 @@ KEYWORD_CATEGORY_MAP = {
     "Distributed": "Computer Science",
     "Cloud": "Computer Science",
     "API": "Computer Science",
-    "Data Mining": "Computer Science",
+    "Data": "Computer Science",
     "Software": "Computer Science",
     "Pressman": "Computer Science",
     "NODE_VOL": "Computer Science",
 
     # Cryptography / Security
-    "Cryptography": "Security",
-    "Cyber": "Security",
-    "Blue Team": "Security",
-    "Practical Cryptography": "Security",
-    "Stuxnet": "Security",
-    "Security": "Security",
+    "Cryptography": "cybersecurity",
+    "Cyber": "cybersecurity",
+    "Practical Cryptography": "cybersecurity",
+    "Stuxnet": "cybersecurity",
+    "Security": "cybersecurity",
 
     # DIY / Craft / Maker
     "Making Stuff": "DIY",
     "DIY": "DIY",
     "Folding Knives": "DIY",
     "Making": "DIY",
-    "Do It Yourself": "DIY",
+    "Yourself": "DIY",
 
     # Fantasy / Sci-Fi / Fiction
     "Necronomicon": "Fiction",
@@ -122,7 +132,6 @@ KEYWORD_CATEGORY_MAP = {
     "Crime": "Forensics",
     "Criminology": "Forensics",
     "Investigator": "Forensics",
-    "Kill or Get Killed": "Forensics",
     "Survival": "Forensics",
     "SAS": "Forensics",
     "Ballistics": "Forensics",
@@ -131,24 +140,29 @@ KEYWORD_CATEGORY_MAP = {
     "MCWP": "Military",
     "MCRP": "Military",
     "AFMAN": "Military",
-    "Training": "Military",
     "Urbanized": "Military",
     "MOUT": "Military",
     "Military": "Military",
     "Weapons": "Military",
     "Fighter": "Military",
     "Raptor": "Military",
+    "army": "Military",
+    "war": "Military",
+    "milit": "Military",
+
+    # Training
+    "training": "training",
+    "excercise": "training",
+    "martial": "training",
 
     # Business / Startup
-    "Zero to One": "Business",
     "Startup": "Business",
     "Entrepreneur": "Business",
     "Business": "Business",
 
     # Anarchism / Counterculture
-    "Steal This Book": "Anarchism",
-    "Anarchist Cookbook": "Anarchism",
-    "Abbie Hoffman": "Anarchism",
+    "Steal": "Anarchism",
+    "Anarch": "Anarchism",
     "Anarchist": "Anarchism",
     "Counterculture": "Anarchism",
 
@@ -167,8 +181,6 @@ KEYWORD_CATEGORY_MAP = {
     # Cybersecurity and certifications
     "penetration testing": "cybersecurity",
     "ethical hacker": "cybersecurity",
-    "pentest+": "certification",
-    "security+": "certification",
     "ceh": "certification",
     "crisc": "certification",
     "cka": "certification",
@@ -185,15 +197,6 @@ KEYWORD_CATEGORY_MAP = {
     "network": "networking",
     "networking": "networking",
 
-    # Data and machine learning
-    "data analysis": "data",
-    "data mining": "data",
-    "data ethics": "data",
-    "data": "data",
-    "python for data analysis": "data",
-    "machine learning": "data",
-    "artificial intelligence": "data",
-
     # DevOps
     "devops": "devops",
     "gitlab": "devops",
@@ -209,105 +212,28 @@ KEYWORD_CATEGORY_MAP = {
     "uav": "aerospace",
     "spaceship": "aerospace",
 
-    # Fiction
-    "dune": "fiction",
-    "zafón": "fiction",
-    "his dark materials": "fiction",
-    "house of leaves": "fiction",
-    "blood meridian": "fiction",
-    "solarpunk": "fiction",
-    "lord of the flies": "fiction",
-    "master of djinn": "fiction",
-    "tram car": "fiction",
-    "harry quebert": "fiction",
-
-    # Borges
-    "libro de arena": "borges",
-
     # Game development
     "godot": "gamedev",
-    "game engine": "gamedev",
-    "game ai": "gamedev",
-    "physically based rendering": "gamedev",
+    "rendering": "gamedev",
+    "game": "gamedev",
+    "unity": "gamedev",
+    "godot": "gamedev",
 
     # Design / Visualization / General
-    "design elements": "art",
-    "motel of the mysteries": "art",  # borderline satirical/art/design
-    "paper airplane": "aero",
+    "design": "art",
+    "paper airplane": "art",
+    "anim": "art",
+    "draw": "art",
+    "paint": "art",
 
     # Misc
     "hardware hacking": "electronics",
     "energy": "engineering",
-
+    "anatom": "anatomy",
+    "german": "german",
+    "engineering": "engineering",
 
 }
-
-
-def category_fallback_obsolete(filename):
-    categories = []
-
-    if (
-         "comp" in filename or
-         " hack" in filename or
-         " cyber" in filename or
-         " vpn " in filename):
-        categories.append("computers")
-
-    if (
-         "aero" in filename or
-         " aircr" in filename or
-         "flight" in filename):
-        categories.append("aeronautics")
-
-    if (
-         "astron" in filename or
-         ("star" in filename and "started" not in filename) or
-         "galaxy" in filename or
-         "planet" in filename or
-         "moon" in filename
-         ):
-        categories.append("astronomy")
-
-    if "phys" in filename or "fisica" in filename:
-        categories.append("physics")
-
-    if "animal" in filename:
-        categories.append("zoology")
-
-    if (
-         "army" in filename or
-         " war " in filename or
-         " milit" in filename):
-        categories.append("military")
-
-    if "anatom" in filename:
-        categories.append("anatomy")
-
-    if (
-         " anim" in filename or
-         " draw" in filename or
-         " paint" in filename):
-        categories.append("art")
-
-    if "german" in filename:
-        categories.append("german")
-
-    if (
-         "game" in filename or
-         "unity" in filename or
-         "godot" in filename):
-        categories.append("games")
-
-    if (
-         "training" in filename or
-         "excercise" in filename or
-         "martial" in filename):
-        categories.append("training")
-
-    if ("engineering" in filename):
-        categories.append("engineering")
-
-    return categories
 
 
 def category_fallback(path: str) -> str:
@@ -318,12 +244,13 @@ def category_fallback(path: str) -> str:
     path_tokens = re.findall(r"\w+", path.lower())
 
     categories = []
+    print(path_tokens)
     for token in path_tokens:
         for keyword, category in KEYWORD_CATEGORY_MAP.items():
-            if keyword in token:
+            if keyword.lower() in token.lower():
                 categories.append(category)
 
     if categories:
-        return categories
+        return list(set(categories))
 
     return ["uncategorized"]

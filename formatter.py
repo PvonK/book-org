@@ -3,17 +3,16 @@
 import subprocess
 import os
 
-try:
-    term_size = os.get_terminal_size()
-    columns = term_size.columns
-    lines = term_size.lines
-except OSError:
-    term_size = None
-    columns = 0
-    lines = 0
+
+def get_terminal_columns():
+    try:
+        return os.get_terminal_size().columns
+    except OSError:
+        return 80  # Fallback
 
 
 def log(action, text, noprint=False):
+    columns = get_terminal_columns()
     with open("logfile.txt", "a+") as logfile:
         logfile.write(f"{action} {text}\n")
     if noprint:
@@ -30,6 +29,8 @@ def print_selection(dict_list):
         print("No items to display.")
         return
 
+    columns = get_terminal_columns()
+
     show_image = can_display_images()
 
     for idx, item in enumerate(dict_list):
@@ -45,7 +46,15 @@ def print_selection(dict_list):
 
 
 def progress_bar(total, processed):
+    columns = get_terminal_columns()
+    if columns < 6:
+        return
+
     progress_columns = columns-6
+
+    if total == 0:
+        print("100%", "#"*progress_columns)
+        return
 
     bars_per_completed_file = progress_columns/total
     fill = processed * bars_per_completed_file
