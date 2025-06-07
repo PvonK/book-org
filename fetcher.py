@@ -64,10 +64,10 @@ def fetch_google_books(query: str):
 
 
 SEARCH_PATTERNS = [
-    lambda a, t: f"intitle:{t}+inauthor:{a}",  # normal
-    lambda a, t: f"intitle:{a}+inauthor:{t}",  # reversed
-    lambda a, t: f"intitle:{t}",               # just title
-    lambda a, t: f"intitle:{a}"                # just author
+    lambda a, t: f"intitle:{t}+inauthor:{a}" if a and t else "",  # normal
+    lambda a, t: f"intitle:{a}+inauthor:{t}" if a and t else "",  # reversed
+    lambda a, t: f"intitle:{t}" if t else "",                     # just title
+    lambda a, t: f"intitle:{a}" if a else ""                      # just author
 ]
 
 
@@ -83,6 +83,8 @@ def fetch_metadata_by_title_author(
 
     for strategy in SEARCH_PATTERNS:
         query = strategy(author, title)
+        if not query:
+            continue
         # logger.info(f"Trying search query: {query}")
         metadata = fetch_google_books(query)
         if metadata:
