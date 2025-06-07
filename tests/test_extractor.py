@@ -168,6 +168,14 @@ def test_extract_isbn_from_industry_ids_empty_list():
     (["Gabriel García Márquez"],
         "One Hundred Years of Solitude by Gabriel Garcia Marquez", True),
 
+    # No Author
+    ([],
+        "One Hundred Years of Solitude by Gabriel Garcia Marquez", False),
+
+    # None Author
+    ([None],
+        "One Hundred Years of Solitude by Gabriel Garcia Marquez", False),
+
 ])
 def test_check_author_in_filename(authors, title, expected):
     assert check_author_in_filename(authors, title) == expected

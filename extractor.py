@@ -38,6 +38,8 @@ def check_author_in_filename(authors, title):
     title_words = set(re.findall(r'\b\w{3,}\b', title))
 
     for author in authors:
+        if not author:
+            continue
         # Normalize and split author name
         author_words = re.findall(r'\b\w{3,}\b', author.lower())
         if any(word in title_words for word in author_words):
