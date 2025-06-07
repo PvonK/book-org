@@ -31,7 +31,7 @@ def parse_metadata(item):
             ),
         "publisher": volume_info.get("publisher", ""),
         "categories": [i.lower() for i in volume_info.get(
-            "categories", ["uncategorized"]
+            "categories", []
             )],
         "image_url": volume_info.get("imageLinks", {}).get("thumbnail")
     }

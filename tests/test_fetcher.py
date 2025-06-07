@@ -51,7 +51,7 @@ def test_parse_metadata_missing_fields():
     assert metadata["published"] == ""
     assert metadata["isbn"] is None
     assert metadata["publisher"] == ""
-    assert metadata["categories"] == ["uncategorized"]
+    assert metadata["categories"] == []
     assert metadata["image_url"] is None
 
 

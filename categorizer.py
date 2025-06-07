@@ -256,4 +256,4 @@ def category_fallback(path: str) -> str:
     if categories:
         return list(set(categories))
 
-    return ["uncategorized"]
+    return []

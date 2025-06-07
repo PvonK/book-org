@@ -182,24 +182,24 @@ class Book():
         self.new_filename = f"{authors}{title}{published}{isbn}{ext}"
 
     # Finds the categories the book belongs to
-    # and orders them according to their priority
     def set_categories(self):
-        if self.metadata:
-            self.categories = self.metadata.get(
-                "categories", ["uncategorized"]
-                )
+        self.categories = []
 
-            if self.categories == ["uncategorized"]:
-                self.categories = category_fallback(
-                    unidecode(self.metadata.get("title", "").lower())
-                    )
+        categories = self.metadata.get(
+            "categories", []) if self.metadata else []
 
+        if categories:
+            self.categories = categories
         else:
-            self.categories += category_fallback(
-                unidecode(self.new_filename.lower())
-                )
-            if self.categories == ["uncategorized"]:
-                self.categories = ["no-metadata"]
+            title = self.metadata.get("title", "") if self.metadata else ""
+            fallback = category_fallback(unidecode(title.lower()))
+            if fallback:
+                self.categories = fallback
+            elif self.metadata:
+                self.categories = ["uncategorized"]
+
+        if not self.metadata:
+            self.categories = ["no-metadata"] + self.categories
 
     # change the path of the book based on the categories
     def set_new_path(self, pre_defined_categories=[]):

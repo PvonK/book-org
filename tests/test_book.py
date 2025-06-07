@@ -199,3 +199,13 @@ def test_find_metadata_with_embedded_title_author_only(
     assert book.metadata["isbn"] == "0000000000"
     assert mock_fetch_by_isbn.call_count == 0
     assert mock_fetch_by_title_author.call_count == 1
+
+
+@patch("book_org.Book.category_fallback")
+def test_set_categories_no_metadata_no_fallback(mock_fallback):
+    mock_fallback.return_value = []
+    book = Book("path/to/book.pdf")
+    book.metadata = None
+    book.new_filename = "test_book.pdf"
+    book.set_categories()
+    assert book.categories == ["no-metadata"]

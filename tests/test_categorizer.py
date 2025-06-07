@@ -33,10 +33,10 @@ def test_partial_substring_token_match():
     assert "Science" in result
 
 
-def test_no_match_returns_uncategorized():
+def test_no_match_returns_empty():
     path = "CompletelyRandomFileName.abc"
     result = categorizer.category_fallback(path)
-    assert result == ["uncategorized"]
+    assert result == []
 
 
 def test_returns_all_matching_categories():
