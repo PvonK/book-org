@@ -38,6 +38,7 @@ def test_find_metadata_with_isbn(
     mock_fetch_by_title_author.assert_not_called()
 
 
+@patch("book_org.Book.extract_embedded_metadata")
 @patch("book_org.Book.extract_isbn_from_filename")
 @patch("book_org.Book.fetch_metadata_by_title_author")
 @patch("book_org.Book.parse_filename")
@@ -46,9 +47,11 @@ def test_find_metadata_without_isbn(
     mock_log,
     mock_parse_filename,
     mock_fetch_by_title_author,
-    mock_extract_isbn
+    mock_extract_isbn,
+    mock_extract_embedded_metadata,
 ):
     mock_extract_isbn.return_value = None
+    mock_extract_embedded_metadata.return_value = None
     mock_parse_filename.return_value = {
         "title": "Mock Title",
         "authors": "Author A"
@@ -122,3 +125,77 @@ def test_set_new_path_with_categories():
     book.set_new_path()
     assert book.new_path == "test_output/science"
     assert book.new_fullpath == "test_output/science/file.pdf"
+
+
+@patch("book_org.Book.extract_embedded_metadata")
+@patch("book_org.Book.extract_isbn_from_filename")
+@patch("book_org.Book.fetch_metadata_by_isbn")
+@patch("book_org.Book.fetch_metadata_by_title_author")
+@patch("book_org.Book.log")
+def test_find_metadata_with_embedded_isbn(
+    mock_log,
+    mock_fetch_by_title_author,
+    mock_fetch_by_isbn,
+    mock_extract_isbn,
+    mock_extract_embedded,
+):
+    # No ISBN in filename
+    mock_extract_isbn.return_value = None
+
+    # Embedded metadata with ISBN
+    mock_extract_embedded.return_value = {
+        "isbn": "1111222233334",
+        "title": "Embedded Book",
+        "author": "Embedded Author"
+    }
+
+    mock_fetch_by_isbn.return_value = {
+        "title": "Embedded Book",
+        "authors": ["Embedded Author"],
+        "isbn": "1111222233334",
+        "published": "2024",
+        "categories": ["embedded-cat"]
+    }
+
+    book = Book("path/to/ebook.pdf")
+    book.find_metadata()
+
+    assert book.metadata["title"] == "Embedded Book"
+    assert mock_fetch_by_isbn.call_count == 1
+    assert mock_fetch_by_title_author.call_count == 0
+
+
+@patch("book_org.Book.extract_embedded_metadata")
+@patch("book_org.Book.extract_isbn_from_filename")
+@patch("book_org.Book.fetch_metadata_by_title_author")
+@patch("book_org.Book.fetch_metadata_by_isbn")
+@patch("book_org.Book.log")
+def test_find_metadata_with_embedded_title_author_only(
+    mock_log,
+    mock_fetch_by_isbn,
+    mock_fetch_by_title_author,
+    mock_extract_isbn,
+    mock_extract_embedded
+):
+    mock_extract_isbn.return_value = None
+
+    # Embedded metadata without ISBN
+    mock_extract_embedded.return_value = {
+        "title": "No ISBN Title",
+        "author": "Author Unknown"
+    }
+
+    mock_fetch_by_title_author.return_value = {
+        "title": "No ISBN Title",
+        "authors": ["Author Unknown"],
+        "published": "2022",
+        "isbn": "0000000000",
+        "categories": ["fallback-cat"]
+    }
+
+    book = Book("path/to/fallback.pdf")
+    book.find_metadata()
+
+    assert book.metadata["isbn"] == "0000000000"
+    assert mock_fetch_by_isbn.call_count == 0
+    assert mock_fetch_by_title_author.call_count == 1
