@@ -2,8 +2,7 @@
 
 import re
 import os
-from pathlib import Path
-from .extractor import extract_series, extract_year
+from .extractor import extract_series, extract_year, extract_file_extension
 
 
 def clean_filename(name):
@@ -37,12 +36,7 @@ def parse_filename(filename):
     }
 
     # 1. Remove extension
-    if filename.count(".") == 1:
-        path = Path(filename)
-        result['extension'] = path.suffix.replace('.', '')
-        name = path.stem
-    else:
-        name = filename
+    name, result["extension"] = extract_file_extension(filename)
 
     # 2. Clean up and normalize
     name = clean_filename(name)

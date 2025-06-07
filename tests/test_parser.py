@@ -3,6 +3,7 @@ from book_org.parser import clean_filename
 from book_org.parser import parse_annas_filename
 from book_org.parser import parse_filename
 
+
 # ---------------------
 # Tests for clean_filename
 # ---------------------
@@ -35,7 +36,7 @@ def test_parse_filename_title_only(mock_extract_year, mock_extract_series):
     result = parse_filename(filename)
     assert result['title'] == "Interesting Book"
     assert result['authors'] is None
-    assert result['extension'] == "pdf"
+    assert result['extension'] == ".pdf"
 
 
 @patch("book_org.parser.extract_series", return_value=None)
@@ -48,7 +49,7 @@ def test_parse_filename_with_author_and_title(
     result = parse_filename(filename)
     assert result['authors'] == "Jane Doe"
     assert result['title'] == "A Tale of Code"
-    assert result['extension'] == "pdf"
+    assert result['extension'] == ".pdf"
 
 
 @patch("book_org.parser.extract_series", return_value=None)
@@ -58,7 +59,7 @@ def test_parse_filename_by_author(mock_extract_year, mock_extract_series):
     result = parse_filename(filename)
     assert result['authors'] == "John Dev"
     assert result['title'] == "A Tale of Two Parsers"
-    assert result['extension'] == "epub"
+    assert result['extension'] == ".epub"
 
 
 @patch(
