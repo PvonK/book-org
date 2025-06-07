@@ -52,8 +52,7 @@ class Book():
             except Exception as e:
                 log("[ERROR]", f"Exception during ISBN fetch: {e}")
         else:
-            filename = os.path.splitext(os.path.basename(self.filename))[0]
-            parsed_filename = parse_filename(filename)
+            parsed_filename = parse_filename(self.filename)
             author = parsed_filename.get("authors", "")
             title = parsed_filename.get("title", "")
             title = title.replace("_ ", ": ").replace("_", " ")
