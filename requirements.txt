@@ -1,2 +1,5 @@
 requests
 unidecode
+PyMuPDF>=1.21.1
+ebooklib>=0.18
+
