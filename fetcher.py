@@ -1,7 +1,7 @@
 # fetcher.py
 
 import requests
-from .formatter import print_selection
+from .formatter import print_selection, log
 from .config import GOOGLE_BOOKS_API, OPEN_LIBRARY_API
 from .extractor import extract_isbn_from_industry_ids
 from .extractor import check_author_in_filename
@@ -9,6 +9,7 @@ from .extractor import check_author_in_filename
 
 # TODO Show image links in terminal
 # (on the request its volumeInfo["imagelinks"]["thumbnail"])
+# [HALFWAY]
 
 # Dont just use the first item from the request
 # TODO get more metadata from the file:
@@ -50,16 +51,20 @@ def fetch_metadata_by_isbn(isbn):
 def fetch_google_books(query: str):
     """Helper to query the Google Books API and return parsed results."""
     url = f"{GOOGLE_BOOKS_API}{query}"
-    # logger.debug(f"Querying Google Books API: {url}")
+    log("[INFO]", f"Querying Google Books API: {url}")
     try:
         response = requests.get(url)
         if response.status_code == 200:
             items = response.json().get("items")
             if items:
+                # TODO do items[:10] and check the accuracy of the
+                # first 10 metadata results to pick the best one using date
+                # published, publisher name, accuracy of title matching,
+                # number of authors, etc.
                 return parse_metadata(items[0])
     except Exception:
         pass
-        # logger.warning(f"Failed to fetch metadata from API: {e}")
+        log("[WARN]", f"Failed to fetch metadata from API: {e}")
     return None
 
 
@@ -85,7 +90,7 @@ def fetch_metadata_by_title_author(
         query = strategy(author, title)
         if not query:
             continue
-        # logger.info(f"Trying search query: {query}")
+        log("[INFO]", f"Trying search query: {query}")
         metadata = fetch_google_books(query)
         if metadata:
             if check_author_in_filename([author], filename):
@@ -102,7 +107,7 @@ def fetch_metadata_by_title_author(
             if 0 <= index < len(metadata_options):
                 return metadata_options[index]
 
-    # logger.warning("No metadata found.")
+    log("[WARN]", "No metadata found.")
     return None
 
 
