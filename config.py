@@ -9,4 +9,5 @@ valid_file_extensions = [
         ".txt",
         ".epub",
         ".pdf",
+        ".azw3"
     ]
