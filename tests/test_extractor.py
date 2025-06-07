@@ -5,6 +5,7 @@ from book_org.extractor import (
     extract_isbn_from_filename,
     extract_isbn_from_industry_ids,
     check_author_in_filename,
+    extract_file_extension,
 )
 
 
@@ -179,3 +180,47 @@ def test_extract_isbn_from_industry_ids_empty_list():
 ])
 def test_check_author_in_filename(authors, title, expected):
     assert check_author_in_filename(authors, title) == expected
+
+
+# ---------------------
+# Tests for extract_file_extension
+# ---------------------
+
+
+def test_extract_file_extension_valid_pdf():
+    filename = "Some Book Title.pdf"
+    name, ext = extract_file_extension(filename)
+    assert name == "Some Book Title"
+    assert ext == ".pdf"
+
+
+def test_extract_file_extension_valid_epub():
+    filename = "Cool Story.epub"
+    name, ext = extract_file_extension(filename)
+    assert name == "Cool Story"
+    assert ext == ".epub"
+
+
+def test_extract_file_extension_no_match():
+    filename = "archive.tar.gz"
+    result = extract_file_extension(filename)
+    assert result is None
+
+
+def test_extract_file_extension_partial_match():
+    filename = "notes.txt.bak"
+    result = extract_file_extension(filename)
+    assert result is None
+
+
+def test_extract_file_extension_uppercase_ext():
+    filename = "Thesis.PDF"
+    result = extract_file_extension(filename)
+    assert result is None
+
+
+def test_extract_file_extension_multiple_dots():
+    filename = "A.Long.Title.by.Author.azw3"
+    name, ext = extract_file_extension(filename)
+    assert name == "A.Long.Title.by.Author"
+    assert ext == ".azw3"
