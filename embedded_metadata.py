@@ -25,51 +25,92 @@ def extract_metadata(file_path: str) -> Dict[str, Optional[str]]:
     elif ext == ".epub" and epub:
         return extract_epub_metadata(file_path)
     else:
-        return {}  # Fallback or unsupported format
+        return {}
 
 
 def extract_pdf_metadata(file_path: str) -> Dict[str, Optional[str]]:
-    meta = {}
+    meta = {
+        "title": None,
+        "author": None,
+        "isbn": None,
+        "date": None,
+        # "publisher": None,
+    }
+
     with fitz.open(file_path) as doc:
         pdf_meta = doc.metadata or {}
+
         meta['title'] = pdf_meta.get('title')
         meta['author'] = pdf_meta.get('author')
+        meta['date'] = pdf_meta.get('creationDate') or pdf_meta.get('modDate')
+        # meta['publisher'] = pdf_meta.get('producer')
 
         # Try to extract ISBN from first 3 pages (or less if theres not 3)
         for page in doc[:min(3, len(doc))]:
             text = page.get_text()
-            isbn = extract_isbn_from_text(text)
-            if isbn:
-                meta['isbn'] = isbn
-                break
+            if not meta['isbn']:
+                meta['isbn'] = extract_isbn_from_text(text)
+            # if not meta['publisher']:
+            #     meta['publisher'] = extract_publisher_from_text(text)
+
     return meta
 
 
 def extract_epub_metadata(file_path: str) -> Dict[str, Optional[str]]:
-    meta = {}
+    meta = {
+        "title": None,
+        "author": None,
+        "isbn": None,
+        "date": None,
+        # "publisher": None,
+    }
+
     book = epub.read_epub(file_path)
 
-    title = book.get_metadata('DC', 'title')
-    author = book.get_metadata('DC', 'creator')
-    meta['title'] = title[0][0] if title else None
-    meta['author'] = author[0][0] if author else None
+    def get_dc(tag):
+        val = book.get_metadata('DC', tag)
+        return val[0][0] if val else None
 
-    # EPUBs rarely have ISBNs in metadata, may need to extract from content
+    meta['title'] = get_dc('title')
+    meta['author'] = get_dc('creator')
+    meta['date'] = get_dc('date')
+    # meta['publisher'] = get_dc('publisher')
+
+    # Fallback to scanning content for ISBN/publisher if missing
     for item in book.items:
         if item.get_type() == epub.EpubHtml:
             text = item.get_body_content().decode(errors='ignore')
-            isbn = extract_isbn_from_text(text)
-            if isbn:
-                meta['isbn'] = isbn
+
+            if not meta['isbn']:
+                meta['isbn'] = extract_isbn_from_text(text)
+            # if not meta['publisher']:
+            #    meta['publisher'] = extract_publisher_from_text(text)
+
+            if meta['isbn']:  # and meta['publisher']:
                 break
+
     return meta
 
 
 def extract_isbn_from_text(text: str) -> Optional[str]:
     match = re.search(
-        r"(97[89][-\s]?\d{1,5}[-\s]?\d{1,7}[-\s]?\d{1,7}[-\s]?\d)",
+        r"\b(97[89][-\s]?\d{1,5}[-\s]?\d{1,7}[-\s]?\d{1,7}[-\s]?\d)\b",
         text
         )
     if match:
-        return match.group(1).replace(" ", "").replace("-", "")
+        return re.sub(r"[-\s]", "", match.group(1))
+    return None
+
+
+def extract_publisher_from_text(text: str) -> Optional[str]:
+    # Look for common publisher patterns
+    patterns = [
+        r"Published by ([A-Z][\w&\s,.'-]{3,50})",
+        r"Publisher[:\s]+([A-Z][\w&\s,.'-]{3,50})",
+        r"\n([A-Z][\w&\s,.'-]{3,50})\n.*\bPublishing\b",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
     return None
