@@ -36,120 +36,40 @@ class Book():
         self.set_categories()
         self.set_new_path()
 
-    # Searches for the books metadata on different information clients
     def find_metadata(self):
-        log("[SEPARATOR]", "=")
-        log("[INFO]", f"Processing: {self.filename}")
-        isbn = extract_isbn_from_filename(self.filename)
-        metadata = None
+        embedded_meta = extract_embedded_metadata(self.fullpath)
 
-        if isbn:
-            log("[INFO]", f"Found ISBN in filename: {isbn}")
-            try:
-                metadata = fetch_metadata_by_isbn(isbn)
-                if metadata:
-                    log("[SUCCESS]", "Successfully fetched metadata via ISBN.")
-                else:
-                    log("[WARNING]", "No metadata found with extracted ISBN.")
-            except Exception as e:
-                log("[ERROR]", f"Exception during ISBN fetch: {e}")
+        if not embedded_meta.get("isbn"):
+            embedded_meta["isbn"] = extract_isbn_from_filename(self.filename)
 
-        if not metadata:
-            # Try to extract metadata from inside the file (PDF/EPUB)
-            embedded_meta = extract_embedded_metadata(self.fullpath)
-            if embedded_meta:
-                log("[INFO]", "Found embedded metadata:")
-                for k, v in embedded_meta.items():
-                    log("[DATA]", f"{k.capitalize()}: {v}")
-                self.embedded_metadata = embedded_meta
+        if all(embedded_meta.values()):
+            log("[INFO]", "Using embedded metadata.")
+            self.metadata = embedded_meta
+            return embedded_meta
 
-                # Try ISBN first if found
-                if "isbn" in embedded_meta:
-                    try:
-                        metadata = fetch_metadata_by_isbn(
-                            embedded_meta["isbn"]
-                            )
-                        if metadata:
-                            log(
-                                "[SUCCESS]",
-                                "Fetched metadata using embedded ISBN."
-                                )
-                    except Exception as e:
-                        log(
-                            "[ERROR]",
-                            f"Exception during embedded ISBN fetch: {e}"
-                            )
+        if embedded_meta.get("isbn"):
+            log("[INFO]", "Fetching metadata via embedded ISBN.")
+            self.metadata = fetch_metadata_by_isbn(embedded_meta["isbn"])
+            return self.metadata
 
-                # If title/author exists but no ISBN or no metadata:
-                # use author/title fallback
-                if (not metadata
-                        and (
-                            embedded_meta.get("title")
-                            or embedded_meta.get("author")
-                            )):
-                    try:
-                        metadata = fetch_metadata_by_title_author(
-                            embedded_meta.get("author", ""),
-                            embedded_meta.get("title", ""),
-                            interactive=self.interactive_organizer,
-                            filename=self.filename
-                        )
-                        if metadata:
-                            log(
-                                "[SUCCESS]",
-                                "Fetched metadata via embedded title/author."
-                                )
-                    except Exception as e:
-                        log(
-                            "[ERROR]",
-                            f"Error using embedded title/author: {e}"
-                            )
+        # Fall back to filename parsing
+        parsed = parse_filename(self.filename)
+        author = embedded_meta.get("author") or parsed.get("authors", "")
+        title = embedded_meta.get("title") or parsed.get("title", "")
+        title = title.replace("_ ", ": ").replace("_", " ")
 
-        if not metadata:
-            # Fall back to filename parsing
-            parsed = parse_filename(self.filename)
-            author = parsed.get("authors", "")
-            title = parsed.get("title", "")
-            title = title.replace("_ ", ": ").replace("_", " ")
+        if author and title:
+            log("[INFO]", f"Fallback to title/author: '{title}' by '{author}'")
+            self.metadata = fetch_metadata_by_title_author(
+                author, title,
+                interactive=self.interactive_organizer,
+                filename=self.filename
+            )
+            return self.metadata
 
-            if not title:
-                log(
-                    "[WARNING]",
-                    "No ISBN or usable title extracted from filename."
-                    )
-            else:
-                log(
-                    "[INFO]",
-                    f"Trying fallback title/author: '{title}' by '{author}'"
-                    )
-                try:
-                    metadata = fetch_metadata_by_title_author(
-                        author,
-                        title,
-                        interactive=self.interactive_organizer,
-                        filename=self.filename
-                    )
-                    if metadata:
-                        log(
-                            "[SUCCESS]",
-                            "Successfully fetched metadata via fallback."
-                            )
-                    else:
-                        log("[WARNING]", "No metadata found via fallback.")
-                except Exception as e:
-                    log(
-                        "[ERROR]",
-                        f"Exception during fallback title/author fetch: {e}"
-                        )
-
-        if metadata:
-            log("[INFO]", "Final metadata assigned:")
-            for k, v in metadata.items():
-                log("[DATA]", f"{k.capitalize()}: {v}")
-        else:
-            log("[FAILURE]", f"Failed to find metadata for: {self.filename}")
-
-        self.metadata = metadata
+        log("[WARNING]", "Only partial metadata found.")
+        self.metadata = embedded_meta
+        return self.metadata
 
     # Renames the book based on the newly aquired metadata
     def set_new_filename(self, metadata):
