@@ -1,6 +1,7 @@
 # config.py
 
-GOOGLE_BOOKS_API = "https://www.googleapis.com/books/v1/volumes?q="
+GOOGLE_BOOKS_API = \
+    "https://www.googleapis.com/books/v1/volumes?orderBy=relevance&q="
 OPEN_LIBRARY_API = "https://openlibrary.org/search.json?"
 
 valid_file_extensions = [
